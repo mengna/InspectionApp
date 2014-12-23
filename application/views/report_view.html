@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>section</title>
+        <script src="js/jquery-1.11.1.min.js" ></script>
+        <script>            
+            function titleElement() {
+                return '<div class="title_entity" value="0"><input class="title_text" type="text"></div>';
+            }
+            
+            function imageElement() {
+                return '<div class="image_entity" value="0"><canvas class="imgCanvas" width="800" height="600" style="border:1px solid #d3d3d3;"></canvas><br><input class="imgButton" type="file"></div>';
+            }
+            
+            function summaryElement() {
+                return '<div class="summary_entity" value="0"><p>Summary:</p><textarea class="summary_text" style="width: 800px; height: 250px;"></textarea></div>';
+            }
+        </script>
+    </head>
+    <body>   
+                
+        Report Name        : <input type="text" id="reportName"><br>
+        Project Number     : <input type="text" id="projectNumber"><br>
+        Project Name       : <input type="text" id="projectName"><br>
+        Project Address    : <input type="text" id="projectAddress"><br>
+        Company Issued     : <input type="text" id="issuedToCompany"><br>
+        Person Issued      : <input type="text" id="issuedToPerson"><br>
+        Inspector          : <input type="text" id="inspector"><br>
+        Company Name       : <input type="text" id="companyName"><br>
+        Company Address    : <input type="text" id="companyAddress"><br>
+        Company Email      : <input type="text" id="companyEmail"><br>
+        Company Phone      : <input type="text" id="companyPhone"><br>
+        Date Reviewed      : <input type="date" id="dateReviewed"><br>
+        Date Issued        : <input type="date" id="dateIssued"><br>
+        
+        <br><br>
+        
+        <input id="add_title" type=button value="Add title">
+        <input id="add_image" type=button value="Add image">
+        <input id="add_summary" type=button value="Add summary">
+        <input id="indent" type=button value="Indent">
+        <input id="outdent" type=button value="Outdent">
+
+        <div class="report_body">
+            <script>document.write(titleElement());</script>
+        </div>
+        
+        <br><br>
+        
+        <input id="save" type=button value="save" onclick="handleHazardSaved()">
+        <input id="cancel" type=button value="cancel" onclick="window.location.href='report.html'">
+        <input id="submit" type=button value="Submit">
+        
+        <script>
+            var currentSelected;
+            
+            $("#add_title").click(function() {
+                if (!currentSelected)
+                    return;    
+                currentSelected.after(titleElement());
+            });
+            
+            $("#add_image").click(function() {
+                if (!currentSelected)
+                    return;    
+                currentSelected.after(imageElement());
+            });            
+            
+            $("#add_summary").click(function() {
+                if (!currentSelected)
+                    return;    
+                currentSelected.after(summaryElement());
+            });
+            
+            $("#indent").click(function() {
+                if (!currentSelected)
+                    return;    
+                
+                var level = (Number)(currentSelected.attr("value"));
+                if (level >= 0 && level < 3) //max level is 3
+                {
+                    level = level + 1;
+                    currentSelected.attr("value", level);
+                    currentSelected.css("margin-left", level*50 + "px");
+                }
+            });
+            
+            $("#outdent").click(function() {
+                if (!currentSelected)
+                    return;    
+                
+                var level = (Number)(currentSelected.attr("value"));
+                if (level > 0)
+                {
+                    level = level - 1;
+                    currentSelected.attr("value", level);
+                    currentSelected.css("margin-left", level*50 + "px");
+                }
+            });
+            
+            $(".report_body").on("click", ".title_entity", function() {
+                handleEntryClicked(this);
+            });
+            
+            $(".report_body").on("click", ".image_entity", function() {
+                handleEntryClicked(this);
+            });
+            
+            $(".report_body").on("click", ".summary_entity", function() {
+                handleEntryClicked(this);
+            });
+            
+            $("#submit").click(function() {
+                submitReport();
+            });            
+            
+            // TODO: clean up code
+            function handleEntryClicked(target) {
+                var targetQueryObj = $(target);
+                if (currentSelected === targetQueryObj)
+                    return;
+                
+                if (currentSelected)
+                {
+                    currentSelected.css("border-style", "dashed");
+                    currentSelected.css("border-width", "0px");
+                    currentSelected.css("border-color", "red");
+                }
+                
+                targetQueryObj.css("border-style", "dashed");
+                targetQueryObj.css("border-width", "1px");
+                targetQueryObj.css("border-color", "red");
+                
+                currentSelected = targetQueryObj;
+            }
+            
+            // TODO: clean up code
+            $(".report_body").on("change", ".imgButton", function(evt) {
+                var f = evt.target.files[0];
+
+                // Only process image files.
+                if (!f.type.match('image.*')) {
+                        return;
+                }
+
+                var reader = new FileReader();
+
+                var img = document.createElement("img");
+                
+                var canvas = (this.parentNode.getElementsByClassName("imgCanvas"))[0];
+                
+                // Closure to capture the file information.
+                reader.onload = (function(e) {  
+                    img.src = e.target.result;
+
+                    var MAX_WIDTH = 800;
+                    var MAX_HEIGHT = 600;
+                    var width = img.width;
+                    var height = img.height;
+
+                    if (width > height) {
+                      if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                      }
+                    } else {
+                      if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                      }
+                    }
+
+                    //var canvas = this.parentNode.getElementById("imgCanvas");
+                    canvas.width = width;
+                    canvas.height = height;
+                    var ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, width, height);
+                });
+
+                // Read in the image file as a data URL.
+                reader.readAsDataURL(f);
+            });
+            
+            function handleFileSelect(evt) {
+                var f = evt.target.files[0];
+
+                // Only process image files.
+                if (!f.type.match('image.*')) {
+                        return;
+                }
+
+                var reader = new FileReader();
+
+                var img = document.createElement("img");
+
+                // Closure to capture the file information.
+                reader.onload = (function(e) {  
+                    img.src = e.target.result;
+
+                    var MAX_WIDTH = 800;
+                    var MAX_HEIGHT = 600;
+                    var width = img.width;
+                    var height = img.height;
+
+                    if (width > height) {
+                      if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                      }
+                    } else {
+                      if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                      }
+                    }
+
+                    var canvas = document.getElementById("imgCanvas");
+                    canvas.width = width;
+                    canvas.height = height;
+                    var ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, width, height);
+                });
+
+                // Read in the image file as a data URL.
+                reader.readAsDataURL(f);
+            }
+
+            function submitReport()
+            {
+                var report = new Object();
+                report.name = document.getElementById('reportName').value;
+                report.projectNumber = document.getElementById('projectNumber').value;
+                report.projectName = document.getElementById('projectName').value;
+                report.projectAddress = document.getElementById('projectAddress').value;
+                report.issuedToCompany = document.getElementById('issuedToCompany').value;
+                report.issuedToPerson = document.getElementById('issuedToPerson').value;
+                report.inspector = document.getElementById('inspector').value;
+                report.companyName = document.getElementById('companyName').value;
+                report.companyAddress = document.getElementById('companyAddress').value;
+                report.companyEmail = document.getElementById('companyEmail').value;
+                report.companyPhone = document.getElementById('companyPhone').value;
+                report.dateReviewed = document.getElementById('dateReviewed').value;
+                report.dateIssued = document.getElementById('dateIssued').value;
+                
+                var outEntities = new Array();
+                $(".title_entity, .image_entity, .summary_entity").each(function( i ) {
+                    var entity = new Object();
+                    if (this.className === "title_entity")
+                    {
+                        entity.type = 1;
+                        entity.level = $(this).attr("value");
+                        entity.entity_order = i;
+                        entity.value = $(this).children(".title_text").val();
+                    }
+                    else if (this.className === "image_entity")
+                    {
+                        entity.type = 2;
+                        entity.level = $(this).attr("value");
+                        entity.entity_order = i;
+                        var canvas = ($(this).children(".imgCanvas"))[0];             
+                        entity.value = canvas.toDataURL("image/jpeg",0.5);    
+                    }
+                    else if (this.className === "summary_entity")
+                    {
+                        entity.type = 3;
+                        entity.level = $(this).attr("value");
+                        entity.entity_order = i;
+                        entity.value = $(this).children(".summary_text").val();                            
+                    }
+                    else
+                        return;
+
+                    outEntities.push(entity);
+                });
+                
+                report.entities = outEntities;
+                
+                // new XMLHttpRequest for IE7+, Firefox, Chrome, Opera, Safari and new ActiveXObject for IE6 and IE5
+                var xhr = window.XMLHttpRequest? new XMLHttpRequest(): new ActiveXObject("Microsoft.XMLHTTP");
+                
+                xhr.open("POST", "http://localhost/InspectionApp/report/submitReport");
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                /*xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        alert(xhr.responseText);
+                    }
+                }*/
+                xhr.send(JSON.stringify(report));
+            }
+        </script>    
+    </body>  
+</html>
